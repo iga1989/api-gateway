@@ -35,10 +35,6 @@ public class JwtFilter extends AbstractGatewayFilterFactory<JwtFilter.Config> {
                     throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authorization Header is missing");
                 }
 
-                if (!exchange.getRequest().getHeaders().containsKey(HttpHeaders.AUTHORIZATION)) {
-                    throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authorization Header is missing");
-                }
-
                 String authHeader = Objects.requireNonNull(exchange.getRequest().getHeaders().get(HttpHeaders.AUTHORIZATION)).get(0);
 //                String authHeader = Objects.requireNonNull(exchange.getRequest().getCookies().getFirst("accessToken").getValue());
                 if (authHeader.startsWith("Bearer ")) {
