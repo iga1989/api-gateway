@@ -4,6 +4,7 @@ import com.iga.apigateway.api_gateway.helpers.JwtUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
+import org.springframework.http.HttpCookie;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.server.reactive.ServerHttpRequest;
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 
 @Component
@@ -31,16 +33,21 @@ public class JwtFilter extends AbstractGatewayFilterFactory<JwtFilter.Config> {
             ServerHttpRequest modifiedRequest = null;
             if (routingRequestValidator.isAuthenticated.test(exchange.getRequest())) {
                 // Check for Authorization header
-                if (!exchange.getRequest().getHeaders().containsKey(HttpHeaders.AUTHORIZATION)) {
-                    throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authorization Header is missing");
+//                if (!exchange.getRequest().getHeaders().containsKey(HttpHeaders.AUTHORIZATION)) {
+//                    throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authorization Header is missing");
+//                }
+                if (!routingRequestValidator.isAuthenticated.test(exchange.getRequest())) {
+                    return chain.filter(exchange); // Skip processing if not authenticated
                 }
+                String authHeader = Optional.ofNullable(exchange.getRequest().getCookies().getFirst("accessToken"))
+                        .map(HttpCookie::getValue)
+                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Access token cookie is missing"));
 
-                String authHeader = Objects.requireNonNull(exchange.getRequest().getHeaders().get(HttpHeaders.AUTHORIZATION)).get(0);
-//                String authHeader = Objects.requireNonNull(exchange.getRequest().getCookies().getFirst("accessToken").getValue());
-                if (authHeader.startsWith("Bearer ")) {
-                    authHeader = authHeader.substring(7); // Remove 'Bearer ' prefix
-                    System.out.println("authHeader -> "+authHeader);
-                }
+
+//                String authHeader = Objects.requireNonNull(exchange.getRequest().getHeaders().get(HttpHeaders.AUTHORIZATION)).get(0);
+//                if (authHeader.startsWith("Bearer ")) {
+//                    authHeader = authHeader.substring(7); // Remove 'Bearer ' prefix
+//                }
 
                 try {
                     jwtUtils.validateToken(authHeader); // Validate token using JwtUtils
