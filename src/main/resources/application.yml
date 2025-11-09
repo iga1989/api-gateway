@@ -1,6 +1,9 @@
 spring:
   cloud:
     gateway:
+      httpclient:
+        connect-timeout: 5000
+        response-timeout: 5000
       routes:
         - id: healthprovider-service
           uri: lb://HEALTHPROVIDER-SERVICE
