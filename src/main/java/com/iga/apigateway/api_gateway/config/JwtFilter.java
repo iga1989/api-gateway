@@ -33,26 +33,17 @@ public class JwtFilter extends AbstractGatewayFilterFactory<JwtFilter.Config> {
             ServerHttpRequest modifiedRequest = null;
             if (routingRequestValidator.isAuthenticated.test(exchange.getRequest())) {
                 // Check for Authorization header
-//                if (!exchange.getRequest().getHeaders().containsKey(HttpHeaders.AUTHORIZATION)) {
-//                    throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authorization Header is missing");
-//                }
                 if (!routingRequestValidator.isAuthenticated.test(exchange.getRequest())) {
                     return chain.filter(exchange); // Skip processing if not authenticated
                 }
-                String authHeader = Optional.ofNullable(exchange.getRequest().getCookies().getFirst("accessToken"))
+                String accessToken = Optional.ofNullable(exchange.getRequest().getCookies().getFirst("accessToken"))
                         .map(HttpCookie::getValue)
                         .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Access token cookie is missing"));
 
-
-//                String authHeader = Objects.requireNonNull(exchange.getRequest().getHeaders().get(HttpHeaders.AUTHORIZATION)).get(0);
-//                if (authHeader.startsWith("Bearer ")) {
-//                    authHeader = authHeader.substring(7); // Remove 'Bearer ' prefix
-//                }
-
                 try {
-                    jwtUtils.validateToken(authHeader); // Validate token using JwtUtils
-                    String username = jwtUtils.extractUsername(authHeader);  // Extract username
-                    Set<String> roles = jwtUtils.extractRoles(authHeader);   // Extract roles
+                    jwtUtils.validateToken(accessToken); // Validate token using JwtUtils
+                    String username = jwtUtils.extractUsername(accessToken);  // Extract username
+                    Set<String> roles = jwtUtils.extractRoles(accessToken);   // Extract roles
 
                     // Pass user details to downstream microservices
                     modifiedRequest = exchange.getRequest().mutate()
